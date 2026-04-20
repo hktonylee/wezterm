@@ -794,6 +794,17 @@ impl WindowOps for Window {
 
         const BASE_BORDER: ULength = ULength::new(0);
         let is_resize = config.window_decorations == WindowDecorations::RESIZE;
+        let title_bar_padding_right = if is_resize && !is_full_screen {
+            let dpi = unsafe { GetDpiForWindow(hwnd) };
+            let caption_button_width = unsafe { GetSystemMetricsForDpi(SM_CXSIZE, dpi) }.max(0);
+            let frame_x = unsafe { GetSystemMetricsForDpi(SM_CXFRAME, dpi) }.max(0);
+            let padded_border = unsafe { GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi) }.max(0);
+            // Reserve room for min/max/close so tabs and right-status don't draw under
+            // the integrated titlebar controls.
+            ULength::new((caption_button_width * 3 + frame_x + padded_border) as usize)
+        } else {
+            ULength::new(0)
+        };
 
         let title_font = {
             let font = TITLE_FONT.lock().expect("locking title_font");
@@ -803,7 +814,7 @@ impl WindowOps for Window {
         Ok(Some(Parameters {
             title_bar: parameters::TitleBar {
                 padding_left: ULength::new(0),
-                padding_right: ULength::new(0),
+                padding_right: title_bar_padding_right,
                 height: None,
                 font_and_size: title_font,
             },
