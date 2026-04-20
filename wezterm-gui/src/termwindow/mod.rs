@@ -1543,8 +1543,12 @@ impl TermWindow {
             None => false,
         };
 
+        let tab_bar_width_cells = self
+            .tab_bar_width_pixels()
+            .saturating_div(self.render_metrics.cell_size.width as usize);
+
         let new_tab_bar = TabBarState::new(
-            self.dimensions.pixel_width / self.render_metrics.cell_size.width as usize,
+            tab_bar_width_cells,
             if hovering_in_tab_bar {
                 Some(self.last_mouse_coords.0)
             } else {
@@ -1660,6 +1664,18 @@ impl TermWindow {
                 .detach();
             }
         }
+    }
+
+    pub(crate) fn tab_bar_width_pixels(&self) -> usize {
+        let title_bar_right_padding = self
+            .os_parameters
+            .as_ref()
+            .map(|p| p.title_bar.padding_right.get())
+            .unwrap_or(0);
+
+        self.dimensions
+            .pixel_width
+            .saturating_sub(title_bar_right_padding)
     }
 
     fn update_text_cursor(&mut self, pane: &Rc<dyn Pane>) {

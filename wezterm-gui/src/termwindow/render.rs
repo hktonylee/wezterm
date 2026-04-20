@@ -676,6 +676,7 @@ impl super::TermWindow {
             }
         };
 
+        let tab_bar_pixel_width = self.tab_bar_width_pixels() as f32;
         let num_tabs: f32 = items
             .iter()
             .map(|item| match item.item {
@@ -683,9 +684,8 @@ impl super::TermWindow {
                 _ => 0.,
             })
             .sum();
-        let max_tab_width = ((self.dimensions.pixel_width as f32 / num_tabs)
-            - (1.5 * metrics.cell_size.width as f32))
-            .max(0.);
+        let max_tab_width =
+            ((tab_bar_pixel_width / num_tabs) - (1.5 * metrics.cell_size.width as f32)).max(0.);
 
         for item in items {
             match item.item {
@@ -784,7 +784,7 @@ impl super::TermWindow {
         let tabs = Element::new(&font, content)
             .display(DisplayType::Block)
             .item_type(UIItemType::TabBar(TabBarItem::None))
-            .min_width(Some(Dimension::Pixels(self.dimensions.pixel_width as f32)))
+            .min_width(Some(Dimension::Pixels(tab_bar_pixel_width)))
             .colors(bar_colors);
 
         let border = self.get_os_border();
@@ -798,13 +798,13 @@ impl super::TermWindow {
                 },
                 width: DimensionContext {
                     dpi: self.dimensions.dpi as f32,
-                    pixel_max: self.dimensions.pixel_width as f32,
+                    pixel_max: tab_bar_pixel_width,
                     pixel_cell: metrics.cell_size.width as f32,
                 },
                 bounds: euclid::rect(
                     border.left.get() as f32,
                     0.,
-                    self.dimensions.pixel_width as f32 - (border.left + border.right).get() as f32,
+                    tab_bar_pixel_width - (border.left + border.right).get() as f32,
                     self.dimensions.pixel_height as f32 - (border.top + border.bottom).get() as f32,
                 ),
                 metrics: &metrics,
