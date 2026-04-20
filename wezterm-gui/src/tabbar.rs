@@ -238,14 +238,20 @@ impl TabBarState {
 
         let available_cells =
             title_width.saturating_sub(number_of_tabs.saturating_sub(1) + new_tab.cells().len());
-        let tab_width_max = if config.use_fancy_tab_bar || available_cells >= titles_len {
-            // We can render each title with its full width
-            usize::max_value()
-        } else {
+        let balancing_tabs = !config.use_fancy_tab_bar && available_cells < titles_len;
+        let base_tab_width = if balancing_tabs {
             // We need to clamp the length to balance them out
             available_cells / number_of_tabs
+        } else {
+            // We can render each title with its full width
+            usize::max_value()
         }
         .min(config.tab_max_width);
+        let balanced_remainder = if balancing_tabs {
+            available_cells % number_of_tabs
+        } else {
+            0
+        };
 
         let mut line = Line::with_width(0, SEQ_ZERO);
 
@@ -253,6 +259,8 @@ impl TabBarState {
         let mut items = vec![];
 
         for (tab_idx, tab_title) in tab_titles.iter().enumerate() {
+            let tab_width_max = (base_tab_width + usize::from(tab_idx < balanced_remainder))
+                .min(config.tab_max_width);
             let tab_title_len = tab_title.len.min(tab_width_max);
             let active = tab_idx == active_tab_no;
             let hover = !active && is_tab_hover(mouse_x, x, tab_title_len);
